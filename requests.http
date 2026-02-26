@@ -1,0 +1,18 @@
+POST http://localhost:8080/meals
+Content-Type: application/json
+
+{
+  "userId": 1,
+  "dateTime": "2026-02-25T12:30:00"
+}
+
+###
+
+POST http://localhost:8080/meals/1/foods
+Content-Type: application/json
+
+{
+  "foodName": "Arroz",
+  "quantity": 150,
+  "unit": "g"
+}
