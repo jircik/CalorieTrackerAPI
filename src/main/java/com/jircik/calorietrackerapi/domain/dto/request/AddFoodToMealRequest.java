@@ -1,4 +1,4 @@
-package com.jircik.calorietrackerapi.domain.dto;
+package com.jircik.calorietrackerapi.domain.dto.request;
 
 public record AddFoodToMealRequest(
         String foodName,

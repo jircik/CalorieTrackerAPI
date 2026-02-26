@@ -1,5 +1,6 @@
 package com.jircik.calorietrackerapi.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -7,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -23,6 +26,9 @@ public class Meal {
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
+
+    @OneToMany(mappedBy ="meal", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<MealFood> foods = new ArrayList<>();
 
     @Column(nullable = false)
     private LocalDateTime datetime;
