@@ -8,7 +8,9 @@ import com.jircik.calorietrackerapi.domain.dto.response.MealSummaryResponse;
 import com.jircik.calorietrackerapi.domain.entity.Meal;
 import com.jircik.calorietrackerapi.domain.entity.MealFood;
 import com.jircik.calorietrackerapi.domain.entity.User;
+import com.jircik.calorietrackerapi.domain.fatsecret.NutritionProvider;
 import com.jircik.calorietrackerapi.exception.ResourceNotFoundException;
+import com.jircik.calorietrackerapi.integration.dto.NutritionData;
 import com.jircik.calorietrackerapi.repository.MealFoodRepository;
 import com.jircik.calorietrackerapi.repository.MealRepository;
 import com.jircik.calorietrackerapi.repository.UserRepository;
@@ -25,14 +27,17 @@ public class MealService {
     private final MealRepository mealRepository;
     private final UserRepository userRepository;
     private final MealFoodRepository mealFoodRepository;
+    private final NutritionProvider nutritionProvider;
 
     public MealService(
             MealRepository mealRepository,
             UserRepository userRepository,
-            MealFoodRepository mealFoodRepository) {
+            MealFoodRepository mealFoodRepository,
+            NutritionProvider nutritionProvider) {
         this.mealRepository = mealRepository;
         this.userRepository = userRepository;
         this.mealFoodRepository = mealFoodRepository;
+        this.nutritionProvider = nutritionProvider;
     }
 
     public MealResponse createMeal(Long userId, LocalDateTime date) {
@@ -53,17 +58,24 @@ public class MealService {
     }
 
     public MealFoodResponse addFoodToMeal(Long mealId, AddFoodToMealRequest request) {
+
         Meal meal = mealRepository.findById(mealId)
-                .orElseThrow(() -> new ResourceNotFoundException("Meal not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Meal not found"));
+
+        NutritionData nutrition = nutritionProvider.getNutrition(
+                request.foodName(),
+                request.quantity()
+        );
+
         MealFood mealFood = MealFood.builder()
                 .meal(meal)
                 .foodName(request.foodName())
                 .quantity(request.quantity())
                 .unit(request.unit())
-                .calories(100.0)
-                .carbs(20.0)
-                .protein(10.0)
-                .fat(5.0)
+                .calories(nutrition.calories())
+                .carbs(nutrition.carbs())
+                .protein(nutrition.protein())
+                .fat(nutrition.fat())
                 .build();
 
         MealFood saved = mealFoodRepository.save(mealFood);
