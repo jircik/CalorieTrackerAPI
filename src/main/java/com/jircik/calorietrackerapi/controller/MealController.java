@@ -7,6 +7,7 @@ import com.jircik.calorietrackerapi.domain.dto.response.MealFoodResponse;
 import com.jircik.calorietrackerapi.domain.dto.response.MealResponse;
 import com.jircik.calorietrackerapi.domain.dto.response.MealSummaryResponse;
 import com.jircik.calorietrackerapi.service.MealService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +23,7 @@ public class MealController {
 
     @PostMapping
     public ResponseEntity<MealResponse> createMeal(
-            @RequestBody CreateMealRequest request) {
+            @Valid @RequestBody CreateMealRequest request) {
 
         MealResponse newMeal = mealService.createMeal(request.userId(), request.dateTime());
 
@@ -33,7 +34,7 @@ public class MealController {
     @PostMapping("/{mealId}/foods")
     public ResponseEntity<MealFoodResponse> addFoodToMeal(
             @PathVariable Long mealId,
-            @RequestBody AddFoodToMealRequest request) {
+            @Valid @RequestBody AddFoodToMealRequest request) {
 
         MealFoodResponse mealFood = mealService.addFoodToMeal(mealId, request);
 
