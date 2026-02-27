@@ -1,6 +1,8 @@
 package com.jircik.calorietrackerapi.integration.fatsecret;
 
+import com.jircik.calorietrackerapi.exception.IntegrationException;
 import com.jircik.calorietrackerapi.integration.dto.TokenResponse;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -43,9 +45,14 @@ public class FatSecretAuthClient {
                 .header("Content-Type", "application/x-www-form-urlencoded")
                 .bodyValue("grant_type=client_credentials&scope=basic")
                 .retrieve()
+                .onStatus(HttpStatusCode::isError, clientResponse ->
+                        clientResponse.bodyToMono(String.class)
+                                .map(body -> new IntegrationException("FatSecret auth failed: " + body))
+                )
                 .bodyToMono(TokenResponse.class)
                 .block();
 
+        assert response != null;
         this.accessToken = response.access_token();
         this.expiresAt = Instant.now().plusSeconds(response.expires_in() - 60);
     }

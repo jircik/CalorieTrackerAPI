@@ -56,4 +56,21 @@ public class GlobalExceptionHandler {
                 .body(response);
     }
 
+    @ExceptionHandler(IntegrationException.class)
+    public ResponseEntity<ErrorResponse> handleIntegrationException(
+            IntegrationException ex,
+            HttpServletRequest request) {
+
+        ErrorResponse response = new ErrorResponse(
+                HttpStatus.SERVICE_UNAVAILABLE.value(),
+                ex.getMessage(),
+                request.getRequestURI(),
+                LocalDateTime.now()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(response);
+    }
+
 }
