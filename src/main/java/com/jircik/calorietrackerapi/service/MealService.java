@@ -8,6 +8,7 @@ import com.jircik.calorietrackerapi.domain.dto.response.MealSummaryResponse;
 import com.jircik.calorietrackerapi.domain.entity.Meal;
 import com.jircik.calorietrackerapi.domain.entity.MealFood;
 import com.jircik.calorietrackerapi.domain.entity.User;
+import com.jircik.calorietrackerapi.exception.ResourceNotFoundException;
 import com.jircik.calorietrackerapi.repository.MealFoodRepository;
 import com.jircik.calorietrackerapi.repository.MealRepository;
 import com.jircik.calorietrackerapi.repository.UserRepository;
@@ -37,7 +38,7 @@ public class MealService {
     public MealResponse createMeal(Long userId, LocalDateTime date) {
         Meal meal = new Meal();
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("user not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         meal.setUser(user);
         meal.setDatetime(date);
 
@@ -53,7 +54,7 @@ public class MealService {
 
     public MealFoodResponse addFoodToMeal(Long mealId, AddFoodToMealRequest request) {
         Meal meal = mealRepository.findById(mealId)
-                .orElseThrow(() -> new RuntimeException("meal not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Meal not found!"));
         MealFood mealFood = MealFood.builder()
                 .meal(meal)
                 .foodName(request.foodName())
@@ -81,7 +82,7 @@ public class MealService {
 
     public MealSummaryResponse getMealSummary(Long mealId) {
         Meal meal = mealRepository.findById(mealId)
-                .orElseThrow(() -> new RuntimeException("meal not found!"));
+                .orElseThrow(() -> new ResourceNotFoundException("Meal not found!"));
         List<MealFood> foods = mealFoodRepository.findByMeal_Id(mealId);
 
         Double totalCalories = foods.stream()
@@ -114,7 +115,7 @@ public class MealService {
 
     public DailySummaryResponse getDailySummary (Long userId, LocalDate date) {
 
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("user not found!"));
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("user not found!"));
 
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime end = date.atTime(LocalTime.MAX);
