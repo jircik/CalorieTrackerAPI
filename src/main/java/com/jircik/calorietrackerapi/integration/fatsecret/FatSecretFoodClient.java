@@ -1,9 +1,9 @@
 package com.jircik.calorietrackerapi.integration.fatsecret;
 
+import com.jircik.calorietrackerapi.domain.fatsecret.NutritionResult;
 import com.jircik.calorietrackerapi.exception.IntegrationException;
 import com.jircik.calorietrackerapi.integration.dto.FoodDetailsResponse;
 import com.jircik.calorietrackerapi.integration.dto.FoodSearchResponse;
-import com.jircik.calorietrackerapi.integration.dto.NutritionData;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -90,7 +90,7 @@ public class FatSecretFoodClient {
         return Math.round(value * 100.0) / 100.0;
     }
 
-    public NutritionData calculateNutrition(String foodName, Double quantityInGrams) {
+    public NutritionResult calculateNutrition(String foodName, Double quantityInGrams) {
 
         if (foodName == null || foodName.isBlank()) {
             throw new IllegalArgumentException("Food name must not be null or blank");
@@ -119,7 +119,6 @@ public class FatSecretFoodClient {
 
         var servings = details.food().servings().serving();
 
-        // Filtra apenas servings com unidade em gramas
         var gramServings = servings.stream()
                 .filter(s -> s.metric_serving_unit() != null
                         && s.metric_serving_unit().equalsIgnoreCase("g"))
@@ -157,7 +156,8 @@ public class FatSecretFoodClient {
 
         double factor = quantityInGrams / baseAmount;
 
-        return new NutritionData(
+        return new NutritionResult(
+                food.food_id(),
                 round(baseCalories * factor),
                 round(baseCarbs * factor),
                 round(baseProtein * factor),

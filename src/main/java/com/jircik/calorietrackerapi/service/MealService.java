@@ -9,8 +9,8 @@ import com.jircik.calorietrackerapi.domain.entity.Meal;
 import com.jircik.calorietrackerapi.domain.entity.MealFood;
 import com.jircik.calorietrackerapi.domain.entity.User;
 import com.jircik.calorietrackerapi.domain.fatsecret.NutritionProvider;
+import com.jircik.calorietrackerapi.domain.fatsecret.NutritionResult;
 import com.jircik.calorietrackerapi.exception.ResourceNotFoundException;
-import com.jircik.calorietrackerapi.integration.dto.NutritionData;
 import com.jircik.calorietrackerapi.repository.MealFoodRepository;
 import com.jircik.calorietrackerapi.repository.MealRepository;
 import com.jircik.calorietrackerapi.repository.UserRepository;
@@ -62,7 +62,7 @@ public class MealService {
         Meal meal = mealRepository.findById(mealId)
                 .orElseThrow(() -> new ResourceNotFoundException("Meal not found"));
 
-        NutritionData nutrition = nutritionProvider.getNutrition(
+        NutritionResult nutrition = nutritionProvider.getNutrition(
                 request.foodName(),
                 request.quantity()
         );
@@ -70,6 +70,7 @@ public class MealService {
         MealFood mealFood = MealFood.builder()
                 .meal(meal)
                 .foodName(request.foodName())
+                .fatSecretFoodId(nutrition.foodId())
                 .quantity(request.quantity())
                 .unit(request.unit())
                 .calories(nutrition.calories())

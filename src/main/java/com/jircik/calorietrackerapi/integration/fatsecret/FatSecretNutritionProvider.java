@@ -1,7 +1,7 @@
 package com.jircik.calorietrackerapi.integration.fatsecret;
 
 import com.jircik.calorietrackerapi.domain.fatsecret.NutritionProvider;
-import com.jircik.calorietrackerapi.integration.dto.NutritionData;
+import com.jircik.calorietrackerapi.domain.fatsecret.NutritionResult;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,7 +14,7 @@ public class FatSecretNutritionProvider implements NutritionProvider {
     }
 
     @Override
-    public NutritionData getNutrition(String foodName, Double quantity) {
+    public NutritionResult getNutrition(String foodName, Double quantity) {
         return foodClient.calculateNutrition(foodName, quantity);
     }
 }

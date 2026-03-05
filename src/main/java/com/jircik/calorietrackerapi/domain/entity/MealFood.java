@@ -24,6 +24,9 @@ public class MealFood {
     @Column(nullable = false)
     private String foodName;
 
+    @Column(name="fatsecret_food_id")
+    private String fatSecretFoodId;
+
     @Column(nullable = false)
     private Double quantity;
 
