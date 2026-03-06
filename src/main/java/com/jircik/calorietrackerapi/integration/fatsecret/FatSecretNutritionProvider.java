@@ -53,7 +53,7 @@ public class FatSecretNutritionProvider implements NutritionProvider {
         double factor = quantityInGrams / baseAmount;
 
         return new NutritionResult(
-                details.food().food_name(),
+                details.food().food_id(),
                 details.food().food_name(),
                 round(baseCalories * factor),
                 round(baseCarbs * factor),
@@ -62,6 +62,7 @@ public class FatSecretNutritionProvider implements NutritionProvider {
         );
     }
 
+    @Override
     public NutritionResult calculateNutritionByFoodId(String foodId, Double quantityInGrams) {
 
         if (foodId == null || foodId.isBlank()) {

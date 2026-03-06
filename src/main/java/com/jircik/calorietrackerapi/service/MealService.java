@@ -21,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class MealService {
@@ -62,10 +63,25 @@ public class MealService {
         Meal meal = mealRepository.findById(mealId)
                 .orElseThrow(() -> new ResourceNotFoundException("Meal not found"));
 
-        NutritionResult nutrition = nutritionProvider.getNutrition(
-                request.foodName(),
-                request.quantity()
-        );
+        Optional<MealFood> existingFood =
+                mealFoodRepository.findTopByFoodNameIgnoreCase(request.foodName());
+
+        NutritionResult nutrition;
+
+        if (existingFood.isPresent() && existingFood.get().getFatSecretFoodId() != null) {
+
+            nutrition = nutritionProvider.calculateNutritionByFoodId(
+                    existingFood.get().getFatSecretFoodId(),
+                    request.quantity()
+            );
+
+        } else {
+
+            nutrition = nutritionProvider.getNutrition(
+                    request.foodName(),
+                    request.quantity()
+            );
+        }
 
         MealFood mealFood = MealFood.builder()
                 .meal(meal)
