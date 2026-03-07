@@ -1,18 +1,26 @@
 package com.jircik.calorietrackerapi.integration.fatsecret;
 
+import com.jircik.calorietrackerapi.domain.entity.Food;
 import com.jircik.calorietrackerapi.domain.fatsecret.NutritionProvider;
 import com.jircik.calorietrackerapi.domain.fatsecret.NutritionResult;
 import com.jircik.calorietrackerapi.integration.dto.FoodDetailsResponse;
 import com.jircik.calorietrackerapi.integration.dto.FoodSearchResponse;
+import com.jircik.calorietrackerapi.repository.FoodRepository;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 @Service
 public class FatSecretNutritionProvider implements NutritionProvider {
 
     private final FatSecretFoodClient foodClient;
+    private final FoodRepository foodRepository;
 
-    public FatSecretNutritionProvider(FatSecretFoodClient foodClient) {
+    public FatSecretNutritionProvider(
+            FatSecretFoodClient foodClient,
+            FoodRepository foodRepository) {
         this.foodClient = foodClient;
+        this.foodRepository = foodRepository;
     }
 
     private double round(double value) {
@@ -89,7 +97,25 @@ public class FatSecretNutritionProvider implements NutritionProvider {
             throw new IllegalArgumentException("Quantity must be greater than zero");
         }
 
+        String normalized = foodName.trim().toLowerCase();
+
+        Optional<Food> existingFood = foodRepository.findByNameIgnoreCase(normalized);
+
+        if (existingFood.isPresent()) {
+            return calculateNutritionByFoodId(
+                    existingFood.get().getFatSecretFoodId(),
+                    quantity
+            );
+        }
+
         FoodSearchResponse.Food food = foodClient.searchFirstFood(foodName);
+
+        Food newFood = Food.builder()
+                .name(normalized)
+                .fatSecretFoodId(food.food_id())
+                .build();
+
+        foodRepository.save(newFood);
 
         return calculateNutritionByFoodId(food.food_id(), quantity);
     }
