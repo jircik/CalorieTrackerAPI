@@ -1,7 +1,6 @@
 package com.jircik.calorietrackerapi.service;
 
 import com.jircik.calorietrackerapi.domain.dto.request.AddFoodToMealRequest;
-import com.jircik.calorietrackerapi.domain.dto.response.DailySummaryResponse;
 import com.jircik.calorietrackerapi.domain.dto.response.MealFoodResponse;
 import com.jircik.calorietrackerapi.domain.dto.response.MealResponse;
 import com.jircik.calorietrackerapi.domain.dto.response.MealSummaryResponse;
@@ -16,10 +15,7 @@ import com.jircik.calorietrackerapi.repository.MealRepository;
 import com.jircik.calorietrackerapi.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -139,51 +135,6 @@ public class MealService {
                 totalCarbs,
                 totalFat,
                 totalFoods
-        );
-    }
-
-    public DailySummaryResponse getDailySummary (Long userId, LocalDate date) {
-
-        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("user not found!"));
-
-        LocalDateTime start = date.atStartOfDay();
-        LocalDateTime end = date.atTime(LocalTime.MAX);
-
-        List<Meal> meals = mealRepository.findByUser_IdAndDatetimeBetween(userId, start, end);
-
-        List<Long> mealIds = meals.stream().map(Meal::getId).toList();
-
-        List<MealFood> foods = mealFoodRepository.findByMeal_IdIn(mealIds);
-
-        Double totalCalories = foods.stream()
-                .mapToDouble(MealFood::getCalories)
-                .sum();
-
-        Double totalProtein = foods.stream()
-                .mapToDouble(MealFood::getProtein)
-                .sum();
-
-        Double totalCarbs = foods.stream()
-                .mapToDouble(MealFood::getCarbs)
-                .sum();
-
-        Double totalFat = foods.stream()
-                .mapToDouble(MealFood::getFat)
-                .sum();
-
-        long mealCount = meals.size();
-        long foodCount = foods.size();
-
-
-        return new DailySummaryResponse(
-                userId,
-                date,
-                totalCalories,
-                totalProtein,
-                totalCarbs,
-                totalFat,
-                mealCount,
-                foodCount
         );
     }
 }

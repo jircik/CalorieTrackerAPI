@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface MealRepository extends JpaRepository<Meal, Long> {
 
-    List<Meal> findByUser_IdAndDatetimeBetween(
+    List<Meal> findByUser_IdAndDatetimeBetweenOrderByDatetimeAsc(
             Long userId,
             LocalDateTime start,
             LocalDateTime end
