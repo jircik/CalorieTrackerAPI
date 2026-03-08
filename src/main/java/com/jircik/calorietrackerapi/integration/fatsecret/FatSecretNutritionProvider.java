@@ -1,10 +1,12 @@
 package com.jircik.calorietrackerapi.integration.fatsecret;
 
 import com.jircik.calorietrackerapi.domain.entity.Food;
+import com.jircik.calorietrackerapi.domain.entity.FoodNutrition;
 import com.jircik.calorietrackerapi.domain.fatsecret.NutritionProvider;
 import com.jircik.calorietrackerapi.domain.fatsecret.NutritionResult;
 import com.jircik.calorietrackerapi.integration.dto.FoodDetailsResponse;
 import com.jircik.calorietrackerapi.integration.dto.FoodSearchResponse;
+import com.jircik.calorietrackerapi.repository.FoodNutritionRepository;
 import com.jircik.calorietrackerapi.repository.FoodRepository;
 import org.springframework.stereotype.Service;
 
@@ -15,12 +17,14 @@ public class FatSecretNutritionProvider implements NutritionProvider {
 
     private final FatSecretFoodClient foodClient;
     private final FoodRepository foodRepository;
+    private final FoodNutritionRepository foodNutritionRepository;
 
     public FatSecretNutritionProvider(
             FatSecretFoodClient foodClient,
-            FoodRepository foodRepository) {
+            FoodRepository foodRepository, FoodNutritionRepository foodNutritionRepository) {
         this.foodClient = foodClient;
         this.foodRepository = foodRepository;
+        this.foodNutritionRepository = foodNutritionRepository;
     }
 
     private double round(double value) {
@@ -81,9 +85,36 @@ public class FatSecretNutritionProvider implements NutritionProvider {
             throw new IllegalArgumentException("Quantity must be greater than zero");
         }
 
+        FoodNutrition cached = foodNutritionRepository.findById(foodId).orElse(null);
+
+        if (cached != null) {
+            double factor = quantityInGrams / 100.0;
+
+            return new NutritionResult(
+                    foodId,
+                    null,
+                    round(cached.getCaloriesPer100g() * factor),
+                    round(cached.getCarbsPer100g() * factor),
+                    round(cached.getProteinPer100g() * factor),
+                    round(cached.getFatPer100g() * factor)
+            );
+        }
+
         FoodDetailsResponse details = foodClient.getFoodById(foodId);
 
-        return calculateFromDetails(details, quantityInGrams);
+        NutritionResult result = calculateFromDetails(details, quantityInGrams);
+
+        FoodNutrition nutrition = FoodNutrition.builder()
+                .fatSecretFoodId(foodId)
+                .caloriesPer100g(result.calories() * (100.0 / quantityInGrams))
+                .carbsPer100g(result.carbs() * (100.0 / quantityInGrams))
+                .proteinPer100g(result.protein() * (100.0 / quantityInGrams))
+                .fatPer100g(result.fat() * (100.0 / quantityInGrams))
+                .build();
+
+        foodNutritionRepository.save(nutrition);
+
+        return result;
     }
 
     @Override
