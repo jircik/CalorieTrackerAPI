@@ -55,4 +55,13 @@ public class MealController {
     public void deleteMeal(@PathVariable Long mealId){
         mealService.DeleteMeal(mealId);
     }
+
+    @DeleteMapping("/{mealId}/foods/{mealFoodId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteMealFood(
+            @PathVariable Long mealId,
+            @PathVariable Long mealFoodId
+            ){
+        mealService.DeleteMealFood(mealId, mealFoodId);
+    }
 }

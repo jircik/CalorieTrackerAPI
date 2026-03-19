@@ -106,7 +106,7 @@ public class MealService {
     }
 
     public MealSummaryResponse getMealSummary(Long mealId) {
-        Meal meal = mealRepository.findById(mealId)
+        mealRepository.findById(mealId)
                 .orElseThrow(() -> new ResourceNotFoundException("Meal not found!"));
         List<MealFood> foods = mealFoodRepository.findByMeal_Id(mealId);
 
@@ -144,5 +144,13 @@ public class MealService {
         } else {
             throw new ResourceNotFoundException("Meal not found!");
         }
+    }
+
+    public void DeleteMealFood(Long mealId, Long mealFoodId) {
+        MealFood mealFood = mealFoodRepository
+                .findByIdAndMeal_Id(mealFoodId, mealId)
+                .orElseThrow(() -> new ResourceNotFoundException("MealFood not found!"));
+
+        mealFoodRepository.delete(mealFood);
     }
 }

@@ -24,6 +24,9 @@ Content-Type: application/json
   "unit": "g"
 }
 
+### Delete MealFood From Meal
+DELETE http://localhost:8080/meals/{mealId}/foods/{mealFoodId}
+
 ### Create User
 POST http://localhost:8080/users
 Content-Type: application/json

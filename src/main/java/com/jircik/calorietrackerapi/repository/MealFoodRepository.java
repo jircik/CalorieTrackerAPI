@@ -16,4 +16,5 @@ public interface MealFoodRepository extends JpaRepository<MealFood, Long> {
             LocalDateTime start,
             LocalDateTime end
     );
+    Optional<MealFood> findByIdAndMeal_Id(Long mealFoodId, Long mealId);
 }

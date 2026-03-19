@@ -25,6 +25,7 @@ This project was designed as a **progressively evolving system (V1 → V2 → V3
 ### Food Tracking
 
 * Add foods to meals
+* Remove food from a meal
 * Automatic nutritional calculation based on quantity
 * Integration with FatSecret food database
 
@@ -180,6 +181,12 @@ Add food to meal
 POST /meals/{mealId}/foods
 ```
 
+Delete mealFood from meal
+
+```
+DELETE /meals/{mealId}/foods/{foodId}
+```
+
 ---
 
 # Example Response
@@ -285,8 +292,8 @@ Core backend features:
 ## V2 (Planned)
 
 * MealType (Breakfast, Lunch, Dinner, Snacks)
-* Delete meal
-* Delete meal food
+* Delete meal - done!
+* Delete meal food - done!
 * Update meal food quantity
 * Weekly and monthly summaries
 * User nutritional targets
