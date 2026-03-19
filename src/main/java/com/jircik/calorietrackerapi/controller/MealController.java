@@ -49,4 +49,10 @@ public class MealController {
 
         return ResponseEntity.status(HttpStatus.OK).body(summary);
     }
+
+    @DeleteMapping("/{mealId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteMeal(@PathVariable Long mealId){
+        mealService.DeleteMeal(mealId);
+    }
 }

@@ -1,0 +1,47 @@
+### Create meal
+POST http://localhost:8080/meals
+Content-Type: application/json
+
+{
+  "userId": "(Long) userId",
+  "dateTime": "(ISO-8601) DateTime"
+}
+
+### Delete meal
+
+DELETE http://localhost:8080/meals/{mealId}
+
+### get meal summary
+GET http://localhost:8080/meals/{mealId}/summary
+
+### Add food to meal
+POST http://localhost:8080/meals/{mealId}/foods
+Content-Type: application/json
+
+{
+  "foodName": "foodName",
+  "quantity": "(Double) quantity",
+  "unit": "g"
+}
+
+### Create User
+POST http://localhost:8080/users
+Content-Type: application/json
+
+{
+  "name": "NomeTeste",
+  "email": "email@teste.com"
+}
+
+### Get user by Id
+GET http://localhost:8080/users/{userId}
+
+### Get all users (Only in Dev)
+GET http://localhost:8080/users
+
+### get User daily summary
+GET http://localhost:8080/users/{userId}/daily-summary?date=YYYY-MM-DD
+
+### List User Meals by date
+GET http://localhost:8080/users/{userId}/meals?date=YYYY-MM-DD
+

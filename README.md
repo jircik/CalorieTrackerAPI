@@ -18,6 +18,7 @@ This project was designed as a **progressively evolving system (V1 → V2 → V3
 ### Meal Management
 
 * Create meals
+* Delete meals
 * Retrieve meals by date
 * Retrieve meal summaries
 
@@ -132,7 +133,7 @@ GET /users/{id}
 Get all users
 
 ```
-GET /users
+GET /users (Only in development)
 ```
 
 Get daily nutrition summary
@@ -155,6 +156,12 @@ Create meal
 
 ```
 POST /meals
+```
+
+Delete Meal
+
+```
+DELETE /meals/{mealId}
 ```
 
 Get meal summary
@@ -247,6 +254,18 @@ Benefits:
 
 ---
 
+# Quality & Tests
+
+The project has an automated test suite focused on high reliability and coverage.
+
+* **Integration Tests:** Using `MockWebServer` to simulate real responses (happy paths and 4xx/5xx errors) from the FatSecret API.
+
+* **Web Tests (Slice):** Using `MockMvc` to validate REST contracts, JSON mapping, and HTTP status codes.
+
+* **Coverage:** Monitored via **JaCoCo**, reaching **97% statement coverage** and **82% branch coverage**.
+
+---
+
 # Roadmap
 
 ## V1 (Current)
@@ -287,3 +306,5 @@ Core backend features:
 # Author
 
 Arthur Jircik Cronemberger
+
+Computer Science student and backend developer focused on building scalable and well-structured backend systems.

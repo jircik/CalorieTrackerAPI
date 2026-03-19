@@ -3,5 +3,5 @@ out/
 .idea/
 *.iml
 HELP.md
-requests.http
+testRequests.http
 /target

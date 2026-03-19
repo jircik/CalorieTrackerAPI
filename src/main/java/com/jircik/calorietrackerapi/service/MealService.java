@@ -137,4 +137,12 @@ public class MealService {
                 totalFoods
         );
     }
+
+    public void DeleteMeal(Long mealId) {
+        if (mealRepository.existsById(mealId)) {
+            mealRepository.deleteById(mealId);
+        } else {
+            throw new ResourceNotFoundException("Meal not found!");
+        }
+    }
 }
