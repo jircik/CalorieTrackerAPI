@@ -1,3 +1,5 @@
+### MEAL ENDPOINTS
+
 ### Create meal
 POST http://localhost:8080/meals
 Content-Type: application/json
@@ -14,6 +16,9 @@ DELETE http://localhost:8080/meals/{mealId}
 ### get meal summary
 GET http://localhost:8080/meals/{mealId}/summary
 
+
+### MEALFOOD ENDPOINTS
+
 ### Add food to meal
 POST http://localhost:8080/meals/{mealId}/foods
 Content-Type: application/json
@@ -24,8 +29,20 @@ Content-Type: application/json
   "unit": "g"
 }
 
+### Update mealFood Quantity
+
+PATCH http://localhost:8080/meals/{mealId}/foods/{mealFoodId}
+Content-Type: application/json
+
+{
+  "quantity": "(double) quantity"
+}
+
 ### Delete MealFood From Meal
 DELETE http://localhost:8080/meals/{mealId}/foods/{mealFoodId}
+
+
+### USER ENDPOINTS
 
 ### Create User
 POST http://localhost:8080/users

@@ -3,6 +3,7 @@ package com.jircik.calorietrackerapi.controller;
 
 import com.jircik.calorietrackerapi.domain.dto.request.AddFoodToMealRequest;
 import com.jircik.calorietrackerapi.domain.dto.request.CreateMealRequest;
+import com.jircik.calorietrackerapi.domain.dto.request.UpdateMealFoodQuantityRequest;
 import com.jircik.calorietrackerapi.domain.dto.response.MealFoodResponse;
 import com.jircik.calorietrackerapi.domain.dto.response.MealResponse;
 import com.jircik.calorietrackerapi.domain.dto.response.MealSummaryResponse;
@@ -47,7 +48,7 @@ public class MealController {
 
         MealSummaryResponse summary = mealService.getMealSummary(mealId);
 
-        return ResponseEntity.status(HttpStatus.OK).body(summary);
+        return ResponseEntity.ok(summary);
     }
 
     @DeleteMapping("/{mealId}")
@@ -63,5 +64,17 @@ public class MealController {
             @PathVariable Long mealFoodId
             ){
         mealService.DeleteMealFood(mealId, mealFoodId);
+    }
+
+    @PatchMapping("/{mealId}/foods/{mealFoodId}")
+    public ResponseEntity<MealFoodResponse> updateMealFoodQuantity(
+            @PathVariable Long mealId,
+            @PathVariable Long mealFoodId,
+            @Valid @RequestBody UpdateMealFoodQuantityRequest request
+            ){
+        MealFoodResponse updated = mealService
+                .updateMealFoodQuantity(mealId, mealFoodId, request.quantity());
+
+        return ResponseEntity.ok(updated);
     }
 }

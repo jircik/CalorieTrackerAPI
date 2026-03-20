@@ -153,4 +153,36 @@ public class MealService {
 
         mealFoodRepository.delete(mealFood);
     }
+
+    public MealFoodResponse updateMealFoodQuantity(Long mealId, Long mealFoodId, Double quantity) {
+        if (quantity == null || quantity <= 0 ) {
+            throw new RuntimeException("Invalid quantity");
+        }
+
+        MealFood currentMealFood = mealFoodRepository
+                .findByIdAndMeal_Id(mealFoodId, mealId)
+                .orElseThrow(() -> new ResourceNotFoundException("MealFood not found!"));
+
+        NutritionResult nutrition = nutritionProvider
+                .calculateNutritionByFoodId(currentMealFood.getFatSecretFoodId(), quantity);
+
+        currentMealFood.setQuantity(quantity);
+        currentMealFood.setCalories(nutrition.calories());
+        currentMealFood.setProtein(nutrition.protein());
+        currentMealFood.setCarbs(nutrition.carbs());
+        currentMealFood.setFat(nutrition.fat());
+
+        mealFoodRepository.save(currentMealFood);
+
+        return new MealFoodResponse(
+                currentMealFood.getId(),
+                currentMealFood.getFoodName(),
+                currentMealFood.getQuantity(),
+                currentMealFood.getUnit(),
+                currentMealFood.getCalories(),
+                currentMealFood.getCarbs(),
+                currentMealFood.getProtein(),
+                currentMealFood.getFat()
+        );
+    }
 }
