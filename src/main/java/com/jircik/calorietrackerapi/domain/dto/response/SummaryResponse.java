@@ -2,15 +2,18 @@ package com.jircik.calorietrackerapi.domain.dto.response;
 
 import java.time.LocalDate;
 
-//DTO de um metodo não mais usado, será removido
-public record DailySummaryResponse(
+public record SummaryResponse(
         Long userId,
-        LocalDate date,
+        LocalDate startDate,
+        LocalDate endDate,
+        String periodType,
         Double totalCalories,
         Double totalProtein,
         Double totalCarbs,
         Double totalFat,
         Long mealCount,
-        Long foodCount
+        Long foodCount,
+        Integer daysInPeriod,
+        Double averageCaloriesPerDay
 ) {
 }

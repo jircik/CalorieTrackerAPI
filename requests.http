@@ -59,8 +59,14 @@ GET http://localhost:8080/users/{userId}
 ### Get all users (Only in Dev)
 GET http://localhost:8080/users
 
-### get User daily summary
+### Get User daily summary - Deprecated will redirect to new endpoint /users/{userId}/summary
 GET http://localhost:8080/users/{userId}/daily-summary?date=YYYY-MM-DD
+
+### Get User summary with custom period type
+### DAILY (Requires EndDate if period type not specified),
+### WEEKLY and MONTHLY (doesn't require endDate if period type is specified),
+### CUSTOM(requires endDate, set as default if period type is not specified))
+GET http://localhost:8080/users/{userId}/summary?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&periodType=PERIODTYPE
 
 ### List User Meals by date
 GET http://localhost:8080/users/{userId}/meals?date=YYYY-MM-DD
