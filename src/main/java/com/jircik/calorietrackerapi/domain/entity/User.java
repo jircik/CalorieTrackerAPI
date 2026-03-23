@@ -2,6 +2,8 @@ package com.jircik.calorietrackerapi.domain.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -25,10 +27,23 @@ public class User {
     private String email;
 
     @Column(updatable = false, nullable = false)
+    @CreationTimestamp
     private LocalDateTime createdAt;
 
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-    }
+    @UpdateTimestamp
+    private LocalDateTime updatedAt;
+
+    private Integer age;
+
+    private Double heightInMeters;
+
+    private Double currentWeight;
+
+    private Double weightGoal;
+
+    private Double dailyCalorieIntakeGoal;
+
+    private GenderEnum gender;
+
+    private ActivityLevelEnum activityLevel;
 }

@@ -1,5 +1,6 @@
 package com.jircik.calorietrackerapi.service;
 
+import com.jircik.calorietrackerapi.domain.dto.request.ConfigureUserProfileRequest;
 import com.jircik.calorietrackerapi.domain.dto.request.CreateUserRequest;
 import com.jircik.calorietrackerapi.domain.dto.request.GetSummaryRequest;
 import com.jircik.calorietrackerapi.domain.dto.response.*;
@@ -41,7 +42,43 @@ public class UserService {
         return new UserResponse(
                 saved.getId(),
                 saved.getName(),
-                saved.getEmail()
+                saved.getEmail(),
+                //fields are null because createUser method is separated from configureUserProfile
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null
+        );
+    }
+
+    public UserResponse configureUserProfile(ConfigureUserProfileRequest request, Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (request.age() != null) user.setAge(request.age());
+        if (request.heightInMeters() != null) user.setHeightInMeters(request.heightInMeters());
+        if (request.currentWeight() != null) user.setCurrentWeight(request.currentWeight());
+        if (request.weightGoal() != null) user.setWeightGoal(request.weightGoal());
+        if (request.dailyCalorieIntakeGoal() != null) user.setDailyCalorieIntakeGoal(request.dailyCalorieIntakeGoal());
+        if (request.gender() != null) user.setGender(request.gender());
+        if (request.activityLevel() != null) user.setActivityLevel(request.activityLevel());
+
+        userRepository.save(user);
+
+        return new UserResponse(
+                user.getId(),
+                user.getName(),
+                user.getEmail(),
+                user.getAge(),
+                user.getHeightInMeters(),
+                user.getCurrentWeight(),
+                user.getWeightGoal(),
+                user.getDailyCalorieIntakeGoal(),
+                user.getGender(),
+                user.getActivityLevel()
         );
     }
 
@@ -53,7 +90,14 @@ public class UserService {
         return new UserResponse(
                 user.getId(),
                 user.getName(),
-                user.getEmail()
+                user.getEmail(),
+                user.getAge(),
+                user.getHeightInMeters(),
+                user.getCurrentWeight(),
+                user.getWeightGoal(),
+                user.getDailyCalorieIntakeGoal(),
+                user.getGender(),
+                user.getActivityLevel()
         );
     }
 
@@ -64,7 +108,14 @@ public class UserService {
                 .map(user -> new UserResponse(
                         user.getId(),
                         user.getName(),
-                        user.getEmail()
+                        user.getEmail(),
+                        user.getAge(),
+                        user.getHeightInMeters(),
+                        user.getCurrentWeight(),
+                        user.getWeightGoal(),
+                        user.getDailyCalorieIntakeGoal(),
+                        user.getGender(),
+                        user.getActivityLevel()
                 ))
                 .toList();
     }

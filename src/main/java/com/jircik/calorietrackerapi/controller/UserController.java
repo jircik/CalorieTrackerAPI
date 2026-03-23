@@ -1,5 +1,6 @@
 package com.jircik.calorietrackerapi.controller;
 
+import com.jircik.calorietrackerapi.domain.dto.request.ConfigureUserProfileRequest;
 import com.jircik.calorietrackerapi.domain.dto.request.CreateUserRequest;
 import com.jircik.calorietrackerapi.domain.dto.request.GetSummaryRequest;
 import com.jircik.calorietrackerapi.domain.dto.response.DailySummaryResponse;
@@ -25,6 +26,13 @@ public class UserController {
     @PostMapping
     public UserResponse createUser(@RequestBody CreateUserRequest request) {
         return userService.createUser(request);
+    }
+
+    @PatchMapping("/{id}/profile")
+    public ResponseEntity<UserResponse> configureUserProfile (
+            @RequestBody ConfigureUserProfileRequest request,
+            @PathVariable Long id) {
+        return ResponseEntity.ok(userService.configureUserProfile(request,id));
     }
 
     @GetMapping("/{id}")

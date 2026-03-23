@@ -53,6 +53,21 @@ Content-Type: application/json
   "email": "email@teste.com"
 }
 
+### Configure User Profile or Update User Profile
+
+PATCH http://localhost:8080/users/{userId}/profile
+Content-Type: application/json
+
+{
+  "age": "(Integer)",
+  "heightInMeters": "(Double)",
+  "currentWeight": "(Double)",
+  "weightGoal": "(Double)",
+  "dailyCalorieIntakeGoal": "(Double)",
+  "gender": "(ENUM) MALE, FEMALE, RATHER_NOT_SAY",
+  "activityLevel": "(ENUM) SEDENTARY, LIGHT, MODERATE, INTENSE"
+}
+
 ### Get user by Id
 GET http://localhost:8080/users/{userId}
 
@@ -70,4 +85,5 @@ GET http://localhost:8080/users/{userId}/summary?startDate=YYYY-MM-DD&endDate=YY
 
 ### List User Meals by date
 GET http://localhost:8080/users/{userId}/meals?date=YYYY-MM-DD
+
 
