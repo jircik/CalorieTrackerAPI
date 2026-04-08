@@ -6,6 +6,7 @@ import com.jircik.calorietrackerapi.domain.dto.request.GetSummaryRequest;
 import com.jircik.calorietrackerapi.domain.dto.response.*;
 import com.jircik.calorietrackerapi.domain.entity.Meal;
 import com.jircik.calorietrackerapi.domain.entity.MealFood;
+import com.jircik.calorietrackerapi.domain.entity.MealTypeEnum;
 import com.jircik.calorietrackerapi.domain.entity.User;
 import com.jircik.calorietrackerapi.exception.ResourceNotFoundException;
 import com.jircik.calorietrackerapi.repository.MealFoodRepository;
@@ -19,6 +20,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -131,42 +133,38 @@ public class UserService {
         List<MealFood> foods = mealFoodRepository
                 .findByMeal_User_IdAndMeal_DatetimeBetween(userId, start, end);
 
-        Map<Long, List<MealFood>> foodsByMeal =
-                foods.stream().collect(Collectors.groupingBy(food -> food.getMeal().getId()));
+        Map<MealTypeEnum, List<MealFood>> foodsByType =
+                foods.stream().collect(Collectors.groupingBy(food -> food.getMeal().getMealType()));
 
-        List<MealWithFoodsResponse> meals = foodsByMeal.entrySet()
-                .stream()
-                .map(entry -> {
+        Map<MealTypeEnum, MealWithFoodsResponse> mealsMap = new LinkedHashMap<>();
+        for (MealTypeEnum type : MealTypeEnum.values()) {
+            List<MealFood> typeFoods = foodsByType.get(type);
+            if (typeFoods == null) {
+                mealsMap.put(type, null);
+            } else {
+                Meal meal = typeFoods.getFirst().getMeal();
+                List<MealFoodResponse> foodResponses = typeFoods.stream()
+                        .map(food -> new MealFoodResponse(
+                                food.getId(),
+                                food.getFoodName(),
+                                food.getQuantity(),
+                                food.getUnit(),
+                                food.getCalories(),
+                                food.getCarbs(),
+                                food.getProtein(),
+                                food.getFat()
+                        ))
+                        .toList();
+                mealsMap.put(type, new MealWithFoodsResponse(
+                        meal.getId(),
+                        meal.getDatetime(),
+                        meal.getMealType(),
+                        foodResponses
+                ));
+            }
+        }
 
-                    Meal meal = entry.getValue().getFirst().getMeal();
-
-                    List<MealFoodResponse> foodResponses = entry.getValue()
-                            .stream()
-                            .map(food -> new MealFoodResponse(
-                                    food.getId(),
-                                    food.getFoodName(),
-                                    food.getQuantity(),
-                                    food.getUnit(),
-                                    food.getCalories(),
-                                    food.getCarbs(),
-                                    food.getProtein(),
-                                    food.getFat()
-                            ))
-                            .toList();
-
-                    return new MealWithFoodsResponse(
-                            meal.getId(),
-                            meal.getDatetime(),
-                            foodResponses
-                    );
-                })
-                .toList();
-
-        return new MealsByDateResponse(
-                userId,
-                date,
-                meals
-        );
+        return new MealsByDateResponse(userId, date, mealsMap);
     }
 
     public DailySummaryResponse getDailySummary (Long userId, LocalDate date) {

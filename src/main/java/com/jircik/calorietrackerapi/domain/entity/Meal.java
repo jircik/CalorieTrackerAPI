@@ -1,6 +1,5 @@
 package com.jircik.calorietrackerapi.domain.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -29,6 +28,10 @@ public class Meal {
 
     @OneToMany(mappedBy ="meal", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<MealFood> foods = new ArrayList<>();
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private MealTypeEnum mealType;
 
     @Column(nullable = false)
     private LocalDateTime datetime;

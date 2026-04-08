@@ -6,6 +6,7 @@ import com.jircik.calorietrackerapi.domain.dto.response.MealResponse;
 import com.jircik.calorietrackerapi.domain.dto.response.MealSummaryResponse;
 import com.jircik.calorietrackerapi.domain.entity.Meal;
 import com.jircik.calorietrackerapi.domain.entity.MealFood;
+import com.jircik.calorietrackerapi.domain.entity.MealTypeEnum;
 import com.jircik.calorietrackerapi.domain.entity.User;
 import com.jircik.calorietrackerapi.domain.fatsecret.NutritionProvider;
 import com.jircik.calorietrackerapi.domain.fatsecret.NutritionResult;
@@ -37,12 +38,13 @@ public class MealService {
         this.nutritionProvider = nutritionProvider;
     }
 
-    public MealResponse createMeal(Long userId, LocalDateTime date) {
+    public MealResponse createMeal(Long userId, LocalDateTime date, MealTypeEnum mealType) {
         Meal meal = new Meal();
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         meal.setUser(user);
         meal.setDatetime(date);
+        meal.setMealType(mealType);
 
         Meal created = mealRepository.save(meal);
 
@@ -50,6 +52,7 @@ public class MealService {
                 created.getId(),
                 created.getUser().getId(),
                 created.getDatetime(),
+                created.getMealType(),
                 created.getCreatedAt()
         );
     }

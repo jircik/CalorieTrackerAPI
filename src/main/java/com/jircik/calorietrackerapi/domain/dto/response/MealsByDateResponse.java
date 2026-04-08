@@ -1,11 +1,14 @@
 package com.jircik.calorietrackerapi.domain.dto.response;
 
+import com.jircik.calorietrackerapi.domain.entity.MealTypeEnum;
+
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Map;
+
 
 public record MealsByDateResponse (
         Long userId,
         LocalDate date,
-        List<MealWithFoodsResponse> meals
+        Map<MealTypeEnum, MealWithFoodsResponse> meals
     ){
 }

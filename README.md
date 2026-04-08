@@ -3,7 +3,7 @@
 A backend REST API for tracking meals and nutritional information, built with **Java, Spring Boot, and PostgreSQL**.
 The application integrates with the **FatSecret API** to retrieve nutritional data and implements caching and persistence strategies to optimize performance and reduce external API calls.
 
-This project was designed as a **progressively evolving system (V1 → V2 → V3)**, focusing on clean architecture, scalability, and maintainability.
+This project was designed as a **progressively evolving system (V1 → V2 (current) → V3)**, focusing on clean architecture, scalability, and maintainability.
 
 ---
 
@@ -12,21 +12,22 @@ This project was designed as a **progressively evolving system (V1 → V2 → V3
 ### User Management
 
 * Create users
+* Configure user profile (age, height, weight, goal weight, daily calorie goal, gender, activity level)
 * Retrieve user information
-* Retrieve user daily nutrition summary
+* Retrieve nutrition summaries (daily, weekly, monthly, or custom range)
 
 ### Meal Management
 
-* Create meals
+* Create meals with a meal type (Breakfast, Lunch, Dinner, Snacks)
 * Delete meals
-* Retrieve meals by date
+* Retrieve meals by date, grouped by meal type
 * Retrieve meal summaries
 
 ### Food Tracking
 
 * Add foods to meals
 * Remove food from a meal
-* Automatic nutritional calculation based on quantity
+* Update food quantity with automatic macro recalculation
 * Integration with FatSecret food database
 
 ### Nutritional Calculations
@@ -49,7 +50,9 @@ This project was designed as a **progressively evolving system (V1 → V2 → V3
 
 ### Testing
 
-* Controller layer tests using **Spring Boot Test / MockMvc**
+* Integration tests using `MockWebServer` to simulate FatSecret API responses
+* Web layer tests using `MockMvc`
+* Coverage monitored via **JaCoCo**
 
 ---
 
@@ -98,20 +101,16 @@ Main entities:
 
 ```
 User
- └── Meal
+ └── Meal (type: BREAKFAST | LUNCH | DINNER | SNACKS)
        └── MealFood
 ```
 
 Additionally, the system stores external nutrition data to reduce API calls:
 
 ```
-FoodNutritionCache
+Food              → maps food name to FatSecret food ID
+FoodNutrition     → stores per-100g macros by FatSecret food ID
 ```
-
-This allows the system to:
-
-* reuse nutritional data
-* minimize requests to FatSecret
 
 ---
 
@@ -123,6 +122,12 @@ Create user
 
 ```
 POST /users
+```
+
+Configure user profile
+
+```
+PATCH /users/{userId}/profile
 ```
 
 Get user
@@ -137,7 +142,13 @@ Get all users
 GET /users (Only in development)
 ```
 
-Get daily nutrition summary
+Get nutrition summary
+
+```
+GET /users/{userId}/summary?startDate=YYYY-MM-DD&periodType=DAILY|WEEKLY|MONTHLY|CUSTOM
+```
+
+Get nutrition summary (legacy, deprecated)
 
 ```
 GET /users/{id}/daily-summary?date=YYYY-MM-DD
@@ -146,7 +157,7 @@ GET /users/{id}/daily-summary?date=YYYY-MM-DD
 Get meals by date
 
 ```
-GET /users/{id}/meals?date=YYYY-MM-DD
+GET /users/{userId}/meals?date=YYYY-MM-DD
 ```
 
 ---
@@ -159,7 +170,7 @@ Create meal
 POST /meals
 ```
 
-Delete Meal
+Delete meal
 
 ```
 DELETE /meals/{mealId}
@@ -181,10 +192,16 @@ Add food to meal
 POST /meals/{mealId}/foods
 ```
 
-Delete mealFood from meal
+Update food quantity
 
 ```
-DELETE /meals/{mealId}/foods/{foodId}
+PATCH /meals/{mealId}/foods/{mealFoodId}
+```
+
+Delete food from meal
+
+```
+DELETE /meals/{mealId}/foods/{mealFoodId}
 ```
 
 ---
@@ -196,24 +213,34 @@ Example response for retrieving meals by date:
 ```json
 {
   "userId": 1,
-  "date": "2026-03-06",
-  "meals": [
-    {
+  "date": "2026-04-08",
+  "meals": {
+    "BREAKFAST": {
       "mealId": 1,
-      "dateTime": "2026-03-06T12:30:00",
+      "dateTime": "2026-04-08T08:00:00",
+      "mealType": "BREAKFAST",
       "foods": [
         {
-          "foodName": "rice",
-          "quantity": 150,
+          "id": 1,
+          "foodName": "oats",
+          "quantity": 80.0,
           "unit": "g",
-          "calories": 193,
-          "carbs": 41.85,
-          "protein": 3.99,
-          "fat": 0.42
+          "calories": 303.2,
+          "carbs": 54.61,
+          "protein": 10.54,
+          "fat": 5.18
         }
       ]
-    }
-  ]
+    },
+    "LUNCH": {
+      "mealId": 2,
+      "dateTime": "2026-04-08T12:30:00",
+      "mealType": "LUNCH",
+      "foods": [...]
+    },
+    "DINNER": null,
+    "SNACKS": null
+  }
 }
 ```
 
@@ -275,29 +302,16 @@ The project has an automated test suite focused on high reliability and coverage
 
 # Roadmap
 
-## V1 (Current)
+## V2 (Current)
 
-Core backend features:
-
-* Users
-* Meals
-* Food tracking
-* Nutritional calculations
-* FatSecret integration
-* Caching
+* Users with configurable profile
+* Meals with meal type (Breakfast, Lunch, Dinner, Snacks)
+* Food tracking with automatic macro calculation
+* FatSecret API integration
+* Two-level caching (in-memory + persistent)
+* Daily, weekly, monthly, and custom period summaries
+* Full CRUD for meals and meal foods
 * Automated tests
-
----
-
-## V2 (Planned)
-
-* MealType (Breakfast, Lunch, Dinner, Snacks)
-* Delete meal - done!
-* Delete meal food - done!
-* Update meal food quantity
-* Weekly and monthly summaries
-* User nutritional targets
-* Automatic meal creation
 
 ---
 
@@ -314,4 +328,4 @@ Core backend features:
 
 Arthur Jircik Cronemberger
 
-Computer Science student and backend developer focused on building scalable and well-structured backend systems.
+Software Engineering student and backend developer focused on building scalable and well-structured backend systems.

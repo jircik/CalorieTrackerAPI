@@ -26,7 +26,11 @@ public class MealController {
     public ResponseEntity<MealResponse> createMeal(
             @Valid @RequestBody CreateMealRequest request) {
 
-        MealResponse newMeal = mealService.createMeal(request.userId(), request.dateTime());
+        MealResponse newMeal = mealService.createMeal(
+                request.userId(),
+                request.dateTime(),
+                request.mealType()
+        );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(newMeal);
 

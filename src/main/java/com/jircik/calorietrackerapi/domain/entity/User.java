@@ -43,7 +43,9 @@ public class User {
 
     private Double dailyCalorieIntakeGoal;
 
+    @Enumerated(EnumType.STRING)
     private GenderEnum gender;
 
+    @Enumerated(EnumType.STRING)
     private ActivityLevelEnum activityLevel;
 }
