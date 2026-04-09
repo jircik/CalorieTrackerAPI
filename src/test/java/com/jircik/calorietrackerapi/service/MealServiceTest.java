@@ -6,6 +6,7 @@ import com.jircik.calorietrackerapi.domain.dto.response.MealResponse;
 import com.jircik.calorietrackerapi.domain.dto.response.MealSummaryResponse;
 import com.jircik.calorietrackerapi.domain.entity.Meal;
 import com.jircik.calorietrackerapi.domain.entity.MealFood;
+import com.jircik.calorietrackerapi.domain.entity.MealTypeEnum;
 import com.jircik.calorietrackerapi.domain.entity.User;
 import com.jircik.calorietrackerapi.domain.fatsecret.NutritionProvider;
 import com.jircik.calorietrackerapi.domain.fatsecret.NutritionResult;
@@ -75,7 +76,7 @@ class MealServiceTest {
             when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
             when(mealRepository.save(any(Meal.class))).thenReturn(testMeal);
 
-            MealResponse response = mealService.createMeal(1L, dateTime);
+            MealResponse response = mealService.createMeal(1L, dateTime, MealTypeEnum.BREAKFAST);
 
             assertThat(response.id()).isEqualTo(10L);
             assertThat(response.userId()).isEqualTo(1L);
@@ -88,7 +89,7 @@ class MealServiceTest {
         void shouldThrowWhenUserNotFound() {
             when(userRepository.findById(99L)).thenReturn(Optional.empty());
 
-            assertThatThrownBy(() -> mealService.createMeal(99L, LocalDateTime.now()))
+            assertThatThrownBy(() -> mealService.createMeal(99L, LocalDateTime.now(), MealTypeEnum.BREAKFAST))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessage("User not found");
         }
@@ -188,6 +189,110 @@ class MealServiceTest {
             assertThatThrownBy(() -> mealService.addFoodToMeal(99L, request))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessage("Meal not found");
+        }
+    }
+
+    // DeleteMeal
+    @Nested
+    @DisplayName("DeleteMeal")
+    class DeleteMeal {
+
+        @Test
+        @DisplayName("deve deletar refeição quando ela existe")
+        void shouldDeleteMealWhenExists() {
+            when(mealRepository.existsById(10L)).thenReturn(true);
+
+            mealService.DeleteMeal(10L);
+
+            verify(mealRepository).deleteById(10L);
+        }
+
+        @Test
+        @DisplayName("deve lançar exceção quando refeição não existe")
+        void shouldThrowWhenMealNotFound() {
+            when(mealRepository.existsById(99L)).thenReturn(false);
+
+            assertThatThrownBy(() -> mealService.DeleteMeal(99L))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessage("Meal not found!");
+        }
+    }
+
+    // DeleteMealFood
+    @Nested
+    @DisplayName("DeleteMealFood")
+    class DeleteMealFood {
+
+        @Test
+        @DisplayName("deve deletar alimento quando encontrado")
+        void shouldDeleteMealFoodWhenFound() {
+            MealFood mealFood = MealFood.builder().id(1L).meal(testMeal).build();
+            when(mealFoodRepository.findByIdAndMeal_Id(1L, 10L)).thenReturn(Optional.of(mealFood));
+
+            mealService.DeleteMealFood(10L, 1L);
+
+            verify(mealFoodRepository).delete(mealFood);
+        }
+
+        @Test
+        @DisplayName("deve lançar exceção quando alimento não existe")
+        void shouldThrowWhenMealFoodNotFound() {
+            when(mealFoodRepository.findByIdAndMeal_Id(99L, 10L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> mealService.DeleteMealFood(10L, 99L))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessage("MealFood not found!");
+        }
+    }
+
+    // updateMealFoodQuantity
+    @Nested
+    @DisplayName("updateMealFoodQuantity")
+    class UpdateMealFoodQuantity {
+
+        @Test
+        @DisplayName("deve recalcular nutrição com nova quantidade")
+        void shouldRecalculateNutritionForNewQuantity() {
+            MealFood existing = MealFood.builder()
+                    .id(1L).meal(testMeal).foodName("Arroz").fatSecretFoodId("123")
+                    .quantity(150.0).unit("g").calories(195.0).carbs(43.0).protein(4.0).fat(0.4)
+                    .build();
+
+            NutritionResult nutrition = new NutritionResult("123", "Arroz", 260.0, 57.3, 5.3, 0.5);
+
+            when(mealFoodRepository.findByIdAndMeal_Id(1L, 10L)).thenReturn(Optional.of(existing));
+            when(nutritionProvider.calculateNutritionByFoodId("123", 200.0)).thenReturn(nutrition);
+
+            MealFoodResponse response = mealService.updateMealFoodQuantity(10L, 1L, 200.0);
+
+            assertThat(response.quantity()).isEqualTo(200.0);
+            assertThat(response.calories()).isEqualTo(260.0);
+            assertThat(response.protein()).isEqualTo(5.3);
+            verify(mealFoodRepository).save(existing);
+        }
+
+        @Test
+        @DisplayName("deve lançar exceção quando alimento não existe")
+        void shouldThrowWhenMealFoodNotFound() {
+            when(mealFoodRepository.findByIdAndMeal_Id(99L, 10L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> mealService.updateMealFoodQuantity(10L, 99L, 200.0))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessage("MealFood not found!");
+        }
+
+        @Test
+        @DisplayName("deve lançar exceção quando quantidade é zero")
+        void shouldThrowWhenQuantityIsZero() {
+            assertThatThrownBy(() -> mealService.updateMealFoodQuantity(10L, 1L, 0.0))
+                    .isInstanceOf(RuntimeException.class);
+        }
+
+        @Test
+        @DisplayName("deve lançar exceção quando quantidade é negativa")
+        void shouldThrowWhenQuantityIsNegative() {
+            assertThatThrownBy(() -> mealService.updateMealFoodQuantity(10L, 1L, -10.0))
+                    .isInstanceOf(RuntimeException.class);
         }
     }
 

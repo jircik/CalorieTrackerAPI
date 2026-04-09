@@ -1,6 +1,11 @@
 package com.jircik.calorietrackerapi.service;
 
+import com.jircik.calorietrackerapi.domain.dto.request.ConfigureUserProfileRequest;
 import com.jircik.calorietrackerapi.domain.dto.request.CreateUserRequest;
+import com.jircik.calorietrackerapi.domain.dto.request.GetSummaryRequest;
+import com.jircik.calorietrackerapi.domain.dto.response.SummaryResponse;
+import com.jircik.calorietrackerapi.domain.entity.GenderEnum;
+import com.jircik.calorietrackerapi.domain.entity.MealTypeEnum;
 import com.jircik.calorietrackerapi.domain.dto.response.DailySummaryResponse;
 import com.jircik.calorietrackerapi.domain.dto.response.MealsByDateResponse;
 import com.jircik.calorietrackerapi.domain.dto.response.UserResponse;
@@ -200,6 +205,241 @@ class UserServiceTest {
         }
     }
 
+    // configureUserProfile
+    @Nested
+    @DisplayName("configureUserProfile")
+    class ConfigureUserProfile {
+
+        @Test
+        @DisplayName("deve atualizar apenas campos não nulos")
+        void shouldUpdateOnlyNonNullFields() {
+            ConfigureUserProfileRequest request = new ConfigureUserProfileRequest(
+                    25, 1.75, 75.0, null, null, GenderEnum.MALE, null);
+
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+
+            UserResponse response = userService.configureUserProfile(request, 1L);
+
+            assertThat(testUser.getAge()).isEqualTo(25);
+            assertThat(testUser.getHeightInMeters()).isEqualTo(1.75);
+            assertThat(testUser.getCurrentWeight()).isEqualTo(75.0);
+            assertThat(testUser.getGender()).isEqualTo(GenderEnum.MALE);
+            assertThat(testUser.getWeightGoal()).isNull();
+            verify(userRepository).save(testUser);
+        }
+
+        @Test
+        @DisplayName("deve lançar exceção quando usuário não existe")
+        void shouldThrowWhenUserNotFound() {
+            ConfigureUserProfileRequest request = new ConfigureUserProfileRequest(
+                    25, null, null, null, null, null, null);
+
+            when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> userService.configureUserProfile(request, 99L))
+                    .isInstanceOf(ResourceNotFoundException.class)
+                    .hasMessage("User not found");
+        }
+    }
+
+    // getPeriodSummary
+    @Nested
+    @DisplayName("getPeriodSummary")
+    class GetPeriodSummary {
+
+        private final LocalDate startDate = LocalDate.of(2026, 4, 9);
+
+        @Test
+        @DisplayName("DAILY — deve calcular para um único dia")
+        void shouldCalculateDailyPeriod() {
+            GetSummaryRequest request = new GetSummaryRequest(1L, startDate, null, "DAILY");
+            Meal meal = new Meal();
+            meal.setId(10L);
+            MealFood food = MealFood.builder().calories(500.0).protein(30.0).carbs(60.0).fat(15.0).build();
+
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(mealRepository.findByUser_IdAndDatetimeBetweenOrderByDatetimeAsc(
+                    eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
+                    .thenReturn(List.of(meal));
+            when(mealFoodRepository.findByMeal_IdInOrderByCreatedAtAsc(List.of(10L)))
+                    .thenReturn(List.of(food));
+
+            SummaryResponse response = userService.getPeriodSummary(request);
+
+            assertThat(response.userId()).isEqualTo(1L);
+            assertThat(response.periodType()).isEqualTo("DAILY");
+            assertThat(response.totalCalories()).isEqualTo(500.0);
+            assertThat(response.mealCount()).isEqualTo(1L);
+            assertThat(response.daysInPeriod()).isEqualTo(1);
+            assertThat(response.averageCaloriesPerDay()).isEqualTo(500.0);
+        }
+
+        @Test
+        @DisplayName("WEEKLY — deve ajustar datas para segunda-domingo")
+        void shouldCalculateWeeklyPeriod() {
+            // 2026-04-09 is Thursday; Monday = 2026-04-06, Sunday = 2026-04-12
+            GetSummaryRequest request = new GetSummaryRequest(1L, startDate, null, "WEEKLY");
+
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(mealRepository.findByUser_IdAndDatetimeBetweenOrderByDatetimeAsc(
+                    eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
+                    .thenReturn(Collections.emptyList());
+
+            SummaryResponse response = userService.getPeriodSummary(request);
+
+            assertThat(response.periodType()).isEqualTo("WEEKLY");
+            assertThat(response.startDate()).isEqualTo(LocalDate.of(2026, 4, 6));
+            assertThat(response.endDate()).isEqualTo(LocalDate.of(2026, 4, 12));
+            assertThat(response.daysInPeriod()).isEqualTo(7);
+        }
+
+        @Test
+        @DisplayName("MONTHLY — deve ajustar datas para o mês completo")
+        void shouldCalculateMonthlyPeriod() {
+            // April 2026: 2026-04-01 to 2026-04-30
+            GetSummaryRequest request = new GetSummaryRequest(1L, startDate, null, "MONTHLY");
+
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(mealRepository.findByUser_IdAndDatetimeBetweenOrderByDatetimeAsc(
+                    eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
+                    .thenReturn(Collections.emptyList());
+
+            SummaryResponse response = userService.getPeriodSummary(request);
+
+            assertThat(response.periodType()).isEqualTo("MONTHLY");
+            assertThat(response.startDate()).isEqualTo(LocalDate.of(2026, 4, 1));
+            assertThat(response.endDate()).isEqualTo(LocalDate.of(2026, 4, 30));
+            assertThat(response.daysInPeriod()).isEqualTo(30);
+        }
+
+        @Test
+        @DisplayName("CUSTOM — deve usar datas fornecidas")
+        void shouldCalculateCustomPeriod() {
+            LocalDate endDate = LocalDate.of(2026, 4, 14);
+            GetSummaryRequest request = new GetSummaryRequest(1L, startDate, endDate, "CUSTOM");
+
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(mealRepository.findByUser_IdAndDatetimeBetweenOrderByDatetimeAsc(
+                    eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
+                    .thenReturn(Collections.emptyList());
+
+            SummaryResponse response = userService.getPeriodSummary(request);
+
+            assertThat(response.periodType()).isEqualTo("CUSTOM");
+            assertThat(response.startDate()).isEqualTo(startDate);
+            assertThat(response.endDate()).isEqualTo(endDate);
+            assertThat(response.daysInPeriod()).isEqualTo(6);
+        }
+
+        @Test
+        @DisplayName("deve retornar zeros quando não há refeições no período")
+        void shouldReturnZerosWhenNoMeals() {
+            GetSummaryRequest request = new GetSummaryRequest(1L, startDate, null, "DAILY");
+
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(mealRepository.findByUser_IdAndDatetimeBetweenOrderByDatetimeAsc(
+                    eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
+                    .thenReturn(Collections.emptyList());
+
+            SummaryResponse response = userService.getPeriodSummary(request);
+
+            assertThat(response.totalCalories()).isEqualTo(0.0);
+            assertThat(response.mealCount()).isEqualTo(0L);
+            assertThat(response.foodCount()).isEqualTo(0L);
+        }
+
+        @Test
+        @DisplayName("deve lançar exceção quando usuário não existe")
+        void shouldThrowWhenUserNotFound() {
+            GetSummaryRequest request = new GetSummaryRequest(99L, startDate, null, "DAILY");
+            when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+            assertThatThrownBy(() -> userService.getPeriodSummary(request))
+                    .isInstanceOf(ResourceNotFoundException.class);
+        }
+
+        @Test
+        @DisplayName("deve lançar exceção quando userId é nulo")
+        void shouldThrowWhenUserIdIsNull() {
+            GetSummaryRequest request = new GetSummaryRequest(null, startDate, null, "DAILY");
+
+            assertThatThrownBy(() -> userService.getPeriodSummary(request))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("obrigatórios");
+        }
+
+        @Test
+        @DisplayName("deve lançar exceção quando startDate é nulo")
+        void shouldThrowWhenStartDateIsNull() {
+            GetSummaryRequest request = new GetSummaryRequest(1L, null, null, "DAILY");
+
+            assertThatThrownBy(() -> userService.getPeriodSummary(request))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("obrigatórios");
+        }
+
+        @Test
+        @DisplayName("deve lançar exceção quando startDate é depois de endDate")
+        void shouldThrowWhenStartDateAfterEndDate() {
+            GetSummaryRequest request = new GetSummaryRequest(
+                    1L, LocalDate.of(2026, 4, 14), LocalDate.of(2026, 4, 9), "CUSTOM");
+
+            assertThatThrownBy(() -> userService.getPeriodSummary(request))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("startDate não pode ser depois de endDate");
+        }
+
+        @Test
+        @DisplayName("deve lançar exceção quando período excede 366 dias")
+        void shouldThrowWhenPeriodExceeds366Days() {
+            GetSummaryRequest request = new GetSummaryRequest(
+                    1L, LocalDate.of(2025, 1, 1), LocalDate.of(2027, 1, 1), "CUSTOM");
+
+            assertThatThrownBy(() -> userService.getPeriodSummary(request))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("366");
+        }
+
+        @Test
+        @DisplayName("deve lançar exceção quando CUSTOM sem endDate")
+        void shouldThrowWhenCustomWithoutEndDate() {
+            GetSummaryRequest request = new GetSummaryRequest(1L, startDate, null, "CUSTOM");
+
+            assertThatThrownBy(() -> userService.getPeriodSummary(request))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("endDate");
+        }
+
+        @Test
+        @DisplayName("deve lançar exceção quando periodType é inválido")
+        void shouldThrowWhenPeriodTypeIsInvalid() {
+            LocalDate endDate = LocalDate.of(2026, 4, 14);
+            GetSummaryRequest request = new GetSummaryRequest(1L, startDate, endDate, "FORTNIGHTLY");
+
+            assertThatThrownBy(() -> userService.getPeriodSummary(request))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("periodType inválido");
+        }
+
+        @Test
+        @DisplayName("deve usar endDate fornecido quando periodType é nulo")
+        void shouldUseProvidedEndDateWhenPeriodTypeIsNull() {
+            LocalDate endDate = LocalDate.of(2026, 4, 14);
+            GetSummaryRequest request = new GetSummaryRequest(1L, startDate, endDate, null);
+
+            when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+            when(mealRepository.findByUser_IdAndDatetimeBetweenOrderByDatetimeAsc(
+                    eq(1L), any(LocalDateTime.class), any(LocalDateTime.class)))
+                    .thenReturn(Collections.emptyList());
+
+            SummaryResponse response = userService.getPeriodSummary(request);
+
+            assertThat(response.periodType()).isEqualTo("CUSTOM");
+            assertThat(response.startDate()).isEqualTo(startDate);
+            assertThat(response.endDate()).isEqualTo(endDate);
+        }
+    }
+
     // getMealsByDate
     @Nested
     @DisplayName("getMealsByDate")
@@ -213,6 +453,7 @@ class UserServiceTest {
             Meal meal = new Meal();
             meal.setId(10L);
             meal.setDatetime(date.atTime(12, 0));
+            meal.setMealType(MealTypeEnum.LUNCH);
 
             MealFood food1 = MealFood.builder()
                     .id(1L).meal(meal).foodName("Arroz").quantity(150.0).unit("g")
@@ -230,8 +471,10 @@ class UserServiceTest {
 
             assertThat(response.userId()).isEqualTo(1L);
             assertThat(response.date()).isEqualTo(date);
-            assertThat(response.meals()).hasSize(1);
-            assertThat(response.meals().getFirst().foods()).hasSize(2);
+            // getMealsByDate always returns all 4 MealTypeEnum keys; only LUNCH has data
+            assertThat(response.meals()).containsKey(MealTypeEnum.LUNCH);
+            assertThat(response.meals().get(MealTypeEnum.LUNCH)).isNotNull();
+            assertThat(response.meals().get(MealTypeEnum.LUNCH).foods()).hasSize(2);
         }
 
         @Test
@@ -253,7 +496,8 @@ class UserServiceTest {
 
             MealsByDateResponse response = userService.getMealsByDate(1L, date);
 
-            assertThat(response.meals()).isEmpty();
+            // getMealsByDate always returns all 4 MealTypeEnum keys with null for empty types
+            assertThat(response.meals()).allSatisfy((type, meal) -> assertThat(meal).isNull());
         }
     }
 }
